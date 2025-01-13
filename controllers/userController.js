@@ -9,7 +9,7 @@ const generateToken = (user) => {
 
 const userController = {
 
-  
+
 //register new user
   async register(req, res) {
     try {
@@ -87,6 +87,49 @@ const userController = {
       });
     }
   },
+
+
+    // Get user profile
+    async getProfile(req, res) {
+      try {
+        res.json({
+          id: req.user.id,
+          name: req.user.name,
+          email: req.user.email,
+        });
+      } catch (error) {
+        res.status(400).json({ error: error.message });
+      }
+    },
+    
+  
+    // Update user profile
+    async updateProfile(req, res) {
+      const updates = Object.keys(req.body);
+      const allowedUpdates = ["name", "email", "password"];
+      const isValidOperation = updates.every((update) =>
+        allowedUpdates.includes(update)
+      );
+  
+      if (!isValidOperation) {
+        return res.status(400).json({ error: "Invalid updates" });
+      }
+  
+      try {
+        updates.forEach((update) => (req.user[update] = req.body[update]));
+        await req.user.save();
+  
+        res.json({
+          id: req.user.id,
+          name: req.user.name,
+          email: req.user.email,
+        });
+      } catch (error) {
+        res.status(400).json({ error: error.message });
+      }
+    },
 };
+
+
 
 module.exports = userController;
