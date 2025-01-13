@@ -78,6 +78,144 @@ const projectController = {
       res.status(500).json({ error: error.message });
     }
   },
+
+  
+  // Update project
+  async updateProject(req, res) {
+    try {
+      const project = await Project.findByPk(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      if (project.ownerId !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Only project owner can update project" });
+      }
+
+      const updates = Object.keys(req.body);
+      const allowedUpdates = ["name", "description", "status"];
+      const isValidOperation = updates.every((update) =>
+        allowedUpdates.includes(update)
+      );
+
+      if (!isValidOperation) {
+        return res.status(400).json({ error: "Invalid updates" });
+      }
+
+      updates.forEach((update) => (project[update] = req.body[update]));
+      await project.save();
+
+      res.json(project);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  // Delete project
+  async deleteProject(req, res) {
+    try {
+      const project = await Project.findByPk(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      if (project.ownerId !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Only project owner can delete project" });
+      }
+
+      await project.destroy();
+      res.json({ message: "Project deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Add member to project
+  async addMember(req, res) {
+    try {
+      const project = await Project.findByPk(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      const userProject = await project.getUserProjects({
+        where: { userId: req.user.id },
+      });
+      if (!userProject || userProject[0].role !== "admin") {
+        return res
+          .status(403)
+          .json({ error: "Only project admins can add members" });
+      }
+
+      const { userId, role = "member" } = req.body;
+      const userToAdd = await User.findByPk(userId);
+      if (!userToAdd) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await project.addUser(userToAdd, { through: { role } });
+      res.status(201).json({ message: "Member added successfully" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  // Remove member from project
+  async removeMember(req, res) {
+    try {
+      const project = await Project.findByPk(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      const userProject = await project.getUserProjects({
+        where: { userId: req.user.id },
+      });
+      if (!userProject || userProject[0].role !== "admin") {
+        return res
+          .status(403)
+          .json({ error: "Only project admins can remove members" });
+      }
+  
+      if (project.ownerId === req.params.userId) {
+        return res.status(400).json({ error: "Cannot remove project owner" });
+      }
+
+      await project.removeUser(req.params.userId);
+      res.json({ message: "Member removed successfully" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  // Update member role
+  async updateMemberRole(req, res) {
+    try {
+      const project = await Project.findByPk(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      if (project.ownerId !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Only project owner can update member roles" });
+      }
+
+      const { role } = req.body;
+      if (!["admin", "member"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
+
+      await project.setUserRole(req.params.userId, role);
+      res.json({ message: "Member role updated successfully" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
 };
 
 module.exports = projectController;
