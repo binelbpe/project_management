@@ -119,6 +119,7 @@ const projectController = {
       const project = await Project.findByPk(req.params.id);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
+
       }
 
       if (project.ownerId !== req.user.id) {
@@ -126,6 +127,7 @@ const projectController = {
           .status(403)
           .json({ error: "Only project owner can delete project" });
       }
+
 
       await project.destroy();
       res.json({ message: "Project deleted successfully" });
@@ -158,6 +160,7 @@ const projectController = {
       }
 
       await project.addUser(userToAdd, { through: { role } });
+      
       res.status(201).json({ message: "Member added successfully" });
     } catch (error) {
       res.status(400).json({ error: error.message });
