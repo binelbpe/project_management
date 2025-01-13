@@ -14,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/projects", require("./routes/projectRoutes"))
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
