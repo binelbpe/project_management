@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "users",
         foreignKey: "projectId",
       });
+      Project.hasMany(models.Task, {
+        foreignKey: "projectId",
+        as: "tasks",
+      });
       Project.belongsTo(models.User, {
         foreignKey: "ownerId",
         as: "owner",
