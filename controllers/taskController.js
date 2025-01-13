@@ -37,6 +37,7 @@ const taskController = {
         return res.status(403).json({ error: "Access denied" });
       }
 
+
       const tasks = await Task.findAll({
         where: { projectId: req.params.projectId },
         include: [
@@ -84,7 +85,6 @@ const taskController = {
       if (!isValidOperation) {
         return res.status(400).json({ error: "Invalid updates" });
       }
-
       updates.forEach((update) => (task[update] = req.body[update]));
       await task.save();
 
